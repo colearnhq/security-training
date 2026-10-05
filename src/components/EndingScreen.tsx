@@ -1,24 +1,35 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { CATEGORY_LABEL } from '../data/scenes'
 import { ENDINGS } from '../data/endings'
-import { computeEnding, reportCard, sharpEye, tally, totalScore, type Replay } from '../engine'
+import { computeEnding, MISSED_POINTS, reportCard, SAT_OUT_POINTS, sharpEye, tally, totalScore, type Replay, type ScoreAdjust } from '../engine'
 import { formatPoints, SCORE_INFO } from './OutcomeScreen'
 import { StatsBar } from './StatsBar'
 
-interface Props {
-  game: Replay
+export interface SoloControls {
   endingsFound: string[]
   jumps: number
-  timeline: number
   onRewind: (index: number) => void
   onNewGame: () => void
 }
 
-export function EndingScreen({ game, endingsFound, jumps, timeline, onRewind, onNewGame }: Props) {
+interface Props {
+  game: Replay
+  /** Live mode: missed questions and sat-out follow-ups. */
+  adjust?: ScoreAdjust
+  /** Right-hand side of the newspaper masthead. */
+  edition: string
+  /** Solo mode: time machine and endings gallery. */
+  solo?: SoloControls
+  /** Live mode: extra content at the bottom. */
+  extra?: ReactNode
+}
+
+export function EndingScreen({ game, adjust = {}, edition, solo, extra }: Props) {
   const [selected, setSelected] = useState<number | null>(null)
-  const ending = computeEnding(game)
+  const ending = computeEnding(game, adjust)
   const t = tally(game.history)
-  const total = totalScore(game.history)
+  const total = totalScore(game.history, adjust)
+  const { missed = 0, satOut = 0 } = adjust
   const eye = sharpEye(game.history)
   const card = reportCard(game.history)
   const mistakes = game.history.filter((h) => h.choice.score !== 2)
@@ -30,7 +41,7 @@ export function EndingScreen({ game, endingsFound, jumps, timeline, onRewind, on
         <div className="paper-masthead">
           <span>THE JAKARTA FUTURE TIMES</span>
           <span>
-            {ending.year} · Timeline #{timeline}
+            {ending.year} · {edition}
           </span>
         </div>
         <div className="paper-emoji">{ending.emoji}</div>
@@ -65,8 +76,19 @@ export function EndingScreen({ game, endingsFound, jumps, timeline, onRewind, on
           </span>
           <span className="chip q-best">✅ {t.best} best (+2)</span>
           <span className="chip q-ok">👍 {t.good} good (+1)</span>
+          {t.neutral > 0 && <span className="chip q-neutral">😐 {t.neutral} no help (0)</span>}
           <span className="chip q-bad">⚠️ {t.bad} bad (−1)</span>
           <span className="chip q-critical">💥 {t.fatal} fatal (−2)</span>
+          {missed > 0 && (
+            <span className="chip q-critical">
+              ⏰ {missed} no answer ({formatPoints(MISSED_POINTS)})
+            </span>
+          )}
+          {satOut > 0 && (
+            <span className="chip q-best">
+              😎 {satOut} sat out ({formatPoints(SAT_OUT_POINTS)})
+            </span>
+          )}
           <span className="chip">
             🔍 Sharp eye: {eye.found}/{eye.total} red flags
           </span>
@@ -89,6 +111,27 @@ export function EndingScreen({ game, endingsFound, jumps, timeline, onRewind, on
         </div>
       </div>
 
+      {solo && <SoloCards game={game} endingId={ending.id} solo={solo} selected={selected} onSelect={setSelected} />}
+      {extra}
+    </div>
+  )
+}
+
+function SoloCards({
+  game,
+  endingId,
+  solo: { endingsFound, jumps, onRewind, onNewGame },
+  selected,
+  onSelect: setSelected,
+}: {
+  game: Replay
+  endingId: string
+  solo: SoloControls
+  selected: number | null
+  onSelect: (i: number | null) => void
+}) {
+  return (
+    <>
       <div className="card time-machine">
         <h3>🕰️ The Colearn Lab Time Machine</h3>
         <p>
@@ -131,13 +174,13 @@ export function EndingScreen({ game, endingsFound, jumps, timeline, onRewind, on
 
       <div className="card">
         <h3>
-          🏆 Endings discovered: {endingsFound.length} / {ENDINGS.length}
+          🏆 Endings discovered: {ENDINGS.filter((e) => endingsFound.includes(e.id)).length} / {ENDINGS.length}
         </h3>
         <div className="endings-grid">
           {ENDINGS.map((e) => {
             const got = endingsFound.includes(e.id)
             return (
-              <div key={e.id} className={`ending-tile ${got ? 'got' : 'locked'} ${e.id === ending.id ? 'current' : ''}`}>
+              <div key={e.id} className={`ending-tile ${got ? 'got' : 'locked'} ${e.id === endingId ? 'current' : ''}`}>
                 <span className="ending-emoji">{got ? e.emoji : '🔒'}</span>
                 <span>{got ? e.title : '???'}</span>
               </div>
@@ -150,6 +193,6 @@ export function EndingScreen({ game, endingsFound, jumps, timeline, onRewind, on
           </button>
         </div>
       </div>
-    </div>
+    </>
   )
 }

@@ -3,16 +3,6 @@ import type { Ending } from '../types'
 /** Ordered from best to worst, used for the "endings discovered" gallery. */
 export const ENDINGS: Ending[] = [
   {
-    id: 'powerhouse',
-    emoji: '🚀',
-    title: "Colearn becomes the world's Education Lab powerhouse",
-    year: 2031,
-    tone: 'great',
-    headline: 'COLEARN NAMED MOST TRUSTED EDTECH ON THE PLANET',
-    story:
-      "Zero incidents. Every scam reported, every secret kept. Colearn's reputation for trust fuels expansion into 30 countries, the Colearn Education Lab wins global awards, and parents everywhere know their kids' data is safe. Fajar, now Chief Human Firewall Officer, gives a keynote titled \"It All Started With a Fake Email From Ima\".",
-  },
-  {
     id: 'champion',
     emoji: '🛡️',
     title: 'Fajar, Security Champion',
@@ -20,7 +10,7 @@ export const ENDINGS: Ending[] = [
     tone: 'good',
     headline: "COLEARN RANKED AMONG INDONESIA'S MOST TRUSTED EDTECHS",
     story:
-      'Fajar made the right call when it mattered. Parents trust Colearn, attackers move on to easier targets, and Fajar becomes the go-to person for "is this phishing?" questions. A few choices could have been sharper, but the future looks bright.',
+      'Fajar made the right call when it mattered. Parents trust Colearn, attackers move on to easier targets, and Fajar becomes the go-to person for "is this phishing?" questions. The future looks bright.',
   },
   {
     id: 'scars',
@@ -51,16 +41,6 @@ export const ENDINGS: Ending[] = [
     headline: "NEW JOINER'S FIRST MONTH BECOMES CASE STUDY IN EVERY ONBOARDING DECK",
     story:
       'Colearn survives, barely, but the damage is too big to ignore. HR (the real Ima, this time) has a very awkward conversation with Fajar. Fajar carries a cardboard box to the lift and wonders: if only there were a way to go back and fix it…',
-  },
-  {
-    id: 'bankrupt',
-    emoji: '💀',
-    title: 'Colearn goes bankrupt',
-    year: 2028,
-    tone: 'terrible',
-    headline: 'EDTECH COLLAPSE: COLEARN SHUTS DOWN AFTER STRING OF SECURITY DISASTERS',
-    story:
-      "Stolen accounts, hijacked laptops, scammed parents, leaked plans and a hijacked Instagram. Colearn couldn't recover. Investors pulled out, regulators issued UU PDP fines, and the old office is now a padel court. Somewhere in the ruins, a prototype time machine from the Colearn Lab still blinks…",
   },
 ]
 

@@ -210,11 +210,11 @@ export const SCENES: Scene[] = [
       {
         id: 'report',
         text: "Report it as phishing. I'm not falling for this again!",
-        score: 1,
-        delta: { business: -2, career: -4 },
+        score: -1,
+        delta: { business: -6, career: -5 },
         result:
-          'IT gently replies: "That one\'s real 🙂". Being careful is good, but Fajar skipped the OKR prep and asked questions the doc already answered.',
-        ripple: 'Healthy skepticism ✅. Paranoia that blocks real work ❌.',
+          'IT drops what they\'re doing to investigate a real email from the COO, and the report lands in their weekly false-alarm count. Fajar never opens the OKRs, shows up unprepared and asks questions the doc already answered. Being careful is good; refusing to trust anything stops real work.',
+        ripple: 'Healthy skepticism ✅. Paranoia that blocks real work (and wastes IT\'s time) ❌.',
       },
       {
         id: 'check',
@@ -326,18 +326,19 @@ export const SCENES: Scene[] = [
       {
         id: 'ask',
         text: 'Reply in the same chat: "Is this really you, Pak Abhay?"',
-        score: -1,
-        delta: { security: -3, career: -2 },
+        score: 0,
+        delta: { security: -2 },
         result:
-          '"Yes of course it\'s me, please hurry." Asking a suspected scammer to verify themselves never works.',
-        ripple: 'The scammer doubles down, and Fajar almost gives in.',
+          '"Yes of course it\'s me, please hurry." Asking a suspected scammer to verify themselves never works. Fajar smells something off and stops replying, so Fajar is safe. But nobody else is warned: Fajar protected themselves and did nothing to make Colearn safer.',
+        ripple: 'The scammer moves on to the next new joiner, who isn\'t as careful.',
       },
       {
         id: 'ignore',
         text: 'Ignore it. Not my business.',
-        score: 1,
-        delta: { security: 2 },
-        result: "Fajar is safe, but the scammer just moves on to the next new joiner. A quick report would have stopped them.",
+        score: 0,
+        delta: { security: 1 },
+        result:
+          "Fajar is safe, but that's all. Fajar protected themselves and did nothing to make Colearn safer: the scammer just moves on to the next new joiner. A 30-second report to IT would have stopped them.",
         ripple: 'Two days later, someone in Finance gets the same message.',
       },
       {
@@ -536,11 +537,11 @@ export const SCENES: Scene[] = [
       {
         id: 'lock',
         text: 'Lock the screen (Win+L / Ctrl+Cmd+Q) and leave it with my bag',
-        score: 1,
-        delta: { security: 4 },
+        score: -1,
+        delta: { security: -6, career: -2 },
         result:
-          "Locked means nobody can use Fajar's sessions. Good habit! But a locked laptop can still be stolen, and then IT has to wipe it and Fajar loses a day of work.",
-        ripple: 'Data safe; the hardware was still at risk.',
+          "Locking is a good habit, but the laptop is still sitting alone in a café, now with the bag right next to it. One grab and the thief has the laptop, Fajar's wallet, ID card and office access card. IT has to wipe the laptop remotely and Fajar loses days of work.",
+        ripple: 'A locked laptop is still a laptop someone can carry away, bag included.',
       },
       {
         id: 'take',
@@ -565,7 +566,7 @@ export const SCENES: Scene[] = [
     media: {
       kind: 'call',
       callerName: ['"Rizky, Google Workspace Security"'],
-      callerNumber: [{ t: '+62 812-7730-3921 (mobile)', flag: 'number' }],
+      callerNumber: [{ t: '+62 XXX-XXXX-XXXX (mobile)', flag: 'number' }],
       lines: [
         {
           who: 'them',
@@ -812,15 +813,18 @@ export const SCENES: Scene[] = [
     when: 'Week 2 · Thursday · 10:10',
     category: 'social',
     title: 'A worried parent',
-    intro: "Fajar is on the CS hotline. The caller sounds stressed.",
+    intro: "Fajar is on duty at Kakak Siaga, Colearn's CS hotline. The caller sounds stressed.",
     media: {
       kind: 'call',
-      callerName: ['Unknown caller (says: "Ibu Sari")'],
-      callerNumber: ['+62 857-2291-1180'],
+      callerName: ['Kakak Siaga hotline · Unknown caller (says: "Ibu Sari")'],
+      callerNumber: ['+62 XXX-XXXX-XXXX'],
       lines: [
         {
           who: 'them',
-          text: ["Halo Mas, I'm Nadia's mother. Nadia Putri, grade 8. ", { t: "I lost my phone and can't log in.", flag: 'story' }],
+          text: [
+            "Halo Kak, I'm Nadia's mother. Nadia Putri, grade 8. ",
+            { t: "I lost my phone, so she can't log in.", flag: 'story' },
+          ],
         },
         {
           who: 'them',
@@ -830,9 +834,9 @@ export const SCENES: Scene[] = [
           who: 'them',
           text: [
             'And please ',
-            { t: 'change the phone number to my new one: 0813-4410-7788', flag: 'change' },
+            { t: 'change the phone number to my new one: 0XXX-XXXX-XXXX', flag: 'change' },
             '. ',
-            { t: "Her exam is tomorrow, I'm begging you, please be quick!", flag: 'emotion' },
+            { t: "Her live class starts in 10 minutes, she can't miss it! Please be quick!", flag: 'emotion' },
           ],
         },
       ],
@@ -856,7 +860,7 @@ export const SCENES: Scene[] = [
       {
         id: 'emotion',
         label: 'Emotional pressure',
-        explain: 'Sympathy plus a deadline is designed to make you bend the SOP.',
+        explain: 'Sympathy plus a 10-minute deadline is designed to make you bend the SOP.',
       },
     ],
     choices: [
@@ -880,13 +884,14 @@ export const SCENES: Scene[] = [
         ripple: 'The "mom" messages Fajar every day with new sob stories.',
       },
       {
-        id: 'refuse',
-        text: '"Sorry, we can’t help with that." Hang up.',
-        score: 1,
-        delta: { security: 5, business: -4 },
+        id: 'quiz',
+        text: "Ask her to confirm more of Nadia's details first (full name, school, date of birth), then update the number if everything matches",
+        score: -1,
+        delta: { security: -10, business: -6, career: -6 },
+        flags: ['student_data_leak'],
         result:
-          "No data leaked, so the scammer got nothing. But if this had been the real mom, she'd have been left stuck the night before an exam. The SOP exists so you can be safe AND helpful.",
-        ripple: 'Safe, but a real parent would have had a bad experience.',
+          "The caller answers every question instantly and correctly. Those details were already leaked: a school group chat, an Instagram bio and an older data breach. Fajar updates the number, and the account is taken over five minutes before Nadia's class. Questions only prove someone knows the answers, not that they're the parent.",
+        ripple: "Nadia is locked out of her own class, and the attacker now controls her account.",
       },
       {
         id: 'sop',
@@ -894,12 +899,12 @@ export const SCENES: Scene[] = [
         score: 2,
         delta: { security: 10, business: 8, career: 10 },
         result:
-          'Fajar calmly explains the process and sends a verification to the registered contact. The caller hangs up. Later, the real mom confirms she never called. Nadia\'s data stays safe.',
+          'Fajar calmly explains the process and sends a verification to the registered contact. The caller suddenly has to go. Nadia joins her live class on time from her own device, and the real mom confirms she never called. Nadia\'s data stays safe.',
         ripple: "Nadia's family never even knows how close it was.",
       },
     ],
     lesson:
-      'Social engineers love helpful people. Always follow the verification SOP, never disclose personal data to unverified callers, and keep customer conversations in official Colearn channels.',
+      'Social engineers love helpful people and tight deadlines. Always follow the verification SOP and verify through the registered contact, not with quiz questions (personal details are often already leaked). Never disclose personal data to unverified callers, and keep customer conversations in official Colearn channels.',
   },
 
   {
@@ -1124,7 +1129,7 @@ export const SCENES: Scene[] = [
       lines: [
         [{ t: 'Your Google, Bitwarden and banking passwords are being stolen RIGHT NOW.', flag: 'fear' }],
         [{ t: 'DO NOT close this window or restart your computer, or all your files will be deleted.', flag: 'dontclose' }],
-        ['Call Certified Support immediately: ', { t: '+1 (888) 410-2297 (toll free)', flag: 'phone' }],
+        ['Call Certified Support immediately: ', { t: '+1 (XXX) XXX-XXXX (toll free)', flag: 'phone' }],
         [
           'Our technician will guide you to ',
           { t: 'install a secure remote tool (AnyDesk) to remove the virus.', flag: 'remote' },

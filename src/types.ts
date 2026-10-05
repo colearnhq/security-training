@@ -7,8 +7,11 @@ export type Seg = string | { t: string; flag?: string; href?: string }
 export type Rich = Seg[]
 
 export type Category = 'phishing' | 'social' | 'password' | 'info' | 'wifi' | 'device' | 'incident'
-/** 2 = the best choice, 1 = good but not the best, -1 = bad but not fatal, -2 = fatal. */
-export type Score = 2 | 1 | -1 | -2
+/**
+ * 2 = the best choice, 1 = good but not the best, 0 = kept yourself safe but did nothing to make
+ * Colearn safer, -1 = bad but not fatal, -2 = fatal.
+ */
+export type Score = 2 | 1 | 0 | -1 | -2
 
 export interface Stats {
   security: number

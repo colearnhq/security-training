@@ -1,4 +1,5 @@
 import { ENDINGS } from '../data/endings'
+import { ScoringRules } from './ScoringRules'
 
 interface Props {
   hasSave: boolean
@@ -10,7 +11,7 @@ interface Props {
 export function IntroScreen({ hasSave, endingsFound, onStart, onContinue }: Props) {
   return (
     <div className="card intro">
-      <div className="intro-badge">Colearn IT Security Training</div>
+      <div className="intro-badge">Colearn Security Training</div>
       <h1>Fajar's First Month</h1>
       <p className="lead">A security adventure… with a time machine.</p>
 
@@ -22,8 +23,8 @@ export function IntroScreen({ hasSave, endingsFound, onStart, onContinue }: Prop
         hijackers, password dilemmas and very curious friends.
       </p>
       <p>
-        Every decision ripples into the future. Colearn could become the world's education lab powerhouse… or go
-        bankrupt. And Fajar could get promoted… or fired.
+        Every decision ripples into the future. Fajar could become Colearn's security champion… or end up in the
+        news, or even get fired.
       </p>
 
       <div className="intro-rules">
@@ -53,6 +54,8 @@ export function IntroScreen({ hasSave, endingsFound, onStart, onContinue }: Prop
         </div>
       </div>
 
+      <ScoringRules />
+
       <div className="actions">
         {hasSave && (
           <button className="btn primary" onClick={onContinue}>
@@ -66,7 +69,7 @@ export function IntroScreen({ hasSave, endingsFound, onStart, onContinue }: Prop
 
       {endingsFound.length > 0 && (
         <p className="muted small center">
-          Endings discovered: {endingsFound.length} / {ENDINGS.length}
+          Endings discovered: {ENDINGS.filter((e) => endingsFound.includes(e.id)).length} / {ENDINGS.length}
         </p>
       )}
       <p className="disclaimer">

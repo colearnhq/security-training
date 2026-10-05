@@ -1,9 +1,11 @@
+import type { ReactNode } from 'react'
 import type { HistoryEntry } from '../engine'
 import type { Score } from '../types'
 
 export const SCORE_INFO: Record<Score, { label: string; className: string }> = {
   2: { label: '✅ Best choice', className: 'q-best' },
   1: { label: '👍 Good, but not the best', className: 'q-ok' },
+  0: { label: '😐 Safe, but no help to Colearn', className: 'q-neutral' },
   [-1]: { label: '⚠️ Bad move', className: 'q-bad' },
   [-2]: { label: '💥 Fatal mistake', className: 'q-critical' },
 }
@@ -11,12 +13,14 @@ export const SCORE_INFO: Record<Score, { label: string; className: string }> = {
 export const formatPoints = (n: number) => (n > 0 ? `+${n}` : `${n}`)
 
 interface Props {
-  entry: HistoryEntry
-  isLast: boolean
-  onContinue: () => void
+  entry: Pick<HistoryEntry, 'scene' | 'choice' | 'spotted'>
+  isLast?: boolean
+  /** Solo mode: "Continue" button. Live mode passes `footer` instead (e.g. "waiting for host"). */
+  onContinue?: () => void
+  footer?: ReactNode
 }
 
-export function OutcomeScreen({ entry, isLast, onContinue }: Props) {
+export function OutcomeScreen({ entry, isLast, onContinue, footer }: Props) {
   const { scene, choice, spotted } = entry
   const q = SCORE_INFO[choice.score]
   const flags = scene.redFlags
@@ -70,11 +74,14 @@ export function OutcomeScreen({ entry, isLast, onContinue }: Props) {
         {scene.lesson}
       </div>
 
-      <div className="actions">
-        <button className="btn primary" onClick={onContinue}>
-          {isLast ? "See how Fajar's future turned out →" : 'Continue →'}
-        </button>
-      </div>
+      {onContinue && (
+        <div className="actions">
+          <button className="btn primary" onClick={onContinue}>
+            {isLast ? "See how Fajar's future turned out →" : 'Continue →'}
+          </button>
+        </div>
+      )}
+      {footer}
     </div>
   )
 }

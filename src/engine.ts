@@ -51,26 +51,46 @@ export function nextScene(records: ChoiceRecord[], flags: Set<string>): Scene | 
   return SCENES.find((s) => !answered.has(s.id) && (!s.condition || s.condition(flags))) ?? null
 }
 
-export function tally(history: HistoryEntry[]): { best: number; good: number; bad: number; fatal: number } {
+export function tally(history: HistoryEntry[]): { best: number; good: number; neutral: number; bad: number; fatal: number } {
   const n = (s: Score) => history.filter((h) => h.choice.score === s).length
-  return { best: n(2), good: n(1), bad: n(-1), fatal: n(-2) }
+  return { best: n(2), good: n(1), neutral: n(0), bad: n(-1), fatal: n(-2) }
 }
 
-/** Sum of choice scores, out of a maximum of 2 points per decision. */
-export function totalScore(history: HistoryEntry[]): { points: number; max: number } {
-  return { points: history.reduce((sum, h) => sum + h.choice.score, 0), max: history.length * 2 }
+/** Live mode: points for a question the player didn't answer in time. */
+export const MISSED_POINTS = -3
+/** Live mode: points for a follow-up incident scene that didn't happen to the player's Fajar. */
+export const SAT_OUT_POINTS = 1
+
+/** Live-mode adjustments on top of the player's answered questions. */
+export interface ScoreAdjust {
+  /** questions the player could answer but didn't */
+  missed?: number
+  /** follow-up incident scenes the player's Fajar avoided */
+  satOut?: number
 }
 
-export function computeEnding({ history, flags }: Replay): Ending {
+/**
+ * Sum of choice scores, out of a maximum of 2 points per answered or missed decision, plus
+ * SAT_OUT_POINTS for each incident scene the player sat out.
+ */
+export function totalScore(history: HistoryEntry[], { missed = 0, satOut = 0 }: ScoreAdjust = {}): {
+  points: number
+  max: number
+} {
+  return {
+    points: history.reduce((sum, h) => sum + h.choice.score, 0) + missed * MISSED_POINTS + satOut * SAT_OUT_POINTS,
+    max: (history.length + missed) * 2 + satOut * SAT_OUT_POINTS,
+  }
+}
+
+export function computeEnding({ history, flags }: Replay, adjust: ScoreAdjust = {}): Ending {
   const t = tally(history)
-  const { points, max } = totalScore(history)
+  const { points, max } = totalScore(history, adjust)
   const fireable = FIREABLE.some((f) => flags.has(f))
 
-  if (t.fatal >= 5) return ENDING_BY_ID.bankrupt
   if (t.fatal >= 3 || (fireable && t.fatal >= 2)) return ENDING_BY_ID.fired
   if (t.fatal >= 1) return ENDING_BY_ID.incident
   // No fatal mistakes: the total score decides.
-  if (points === max) return ENDING_BY_ID.powerhouse
   if (points >= max / 2) return ENDING_BY_ID.champion
   if (points >= 0) return ENDING_BY_ID.scars
   return ENDING_BY_ID.incident
