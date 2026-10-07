@@ -318,6 +318,18 @@ async function get(store, q) {
       current ? store.hgetall(keys.answers(room.pin, current.sceneId)) : Promise.resolve({}),
       room.phase === 'results' || q.get('all') === '1' ? store.hgetallMany(sceneKeys) : Promise.resolve(null),
     ])
+
+    console.log('=== PLAYERS DEBUG ===')
+    console.log('players:', players)
+    console.log('players type:', typeof players)
+    console.log('players entries:', Object.entries(players))
+
+    for (const [id, v] of Object.entries(players)) {
+      console.log('PLAYER ID:', id)
+      console.log('PLAYER VALUE:', v)
+      console.log('PLAYER VALUE TYPE:', typeof v)
+    }
+
     return {
       now,
       room: publicRoom,
