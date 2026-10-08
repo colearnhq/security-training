@@ -59,6 +59,6 @@ export interface PlayerView {
   /** present when requested with mine=1; null if the player isn't in this room */
   me?: PlayerInfo | null
   myAnswer?: Answer | null
-  /** every answer this player gave, sent once the game reaches results */
+  /** every answer this player gave: sent with mine=1 and once the game reaches results */
   myAnswers?: Record<string, Answer>
 }

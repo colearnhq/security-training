@@ -37,6 +37,7 @@ class HttpError extends Error {
  * @property {(key: string) => Promise<string | null>} get
  * @property {(key: string, value: string) => Promise<void>} set
  * @property {(key: string, field: string, value: string) => Promise<void>} hset
+ * @property {(key: string, field: string, value: string) => Promise<boolean>} hsetnx sets only if the field is new; true if it did
  * @property {(key: string, field: string) => Promise<string | null>} hget
  * @property {(key: string) => Promise<Record<string, string>>} hgetall
  * @property {(key: string) => Promise<number>} hlen
@@ -72,6 +73,13 @@ function redisStore(/** @type {string} */ url, /** @type {string} */ token) {
       p.hset(k, { [f]: v })
       p.expire(k, TTL_SECONDS)
       await p.exec()
+    },
+    hsetnx: async (k, f, v) => {
+      const p = r.pipeline()
+      p.hsetnx(k, f, v)
+      p.expire(k, TTL_SECONDS)
+      const [created] = await p.exec()
+      return Number(created) === 1
     },
     hget: (k, f) => r.hget(k, f),
     hgetall: async (k) => hashReply(await r.hgetall(k)),
@@ -120,6 +128,13 @@ function memoryStore() {
       h.set(f, v)
       mem.set(k, { v: h, exp: exp() })
     },
+    hsetnx: async (k, f, v) => {
+      const h = hash(k)
+      if (h.has(f)) return false
+      h.set(f, v)
+      mem.set(k, { v: h, exp: exp() })
+      return true
+    },
     hget: async (k, f) => hash(k).get(f) ?? null,
     hgetall: async (k) => Object.fromEntries(hash(k)),
     hlen: async (k) => hash(k).size,
@@ -146,6 +161,8 @@ function getStore() {
 const keys = {
   room: (/** @type {string} */ pin) => `sq:${pin}:room`,
   players: (/** @type {string} */ pin) => `sq:${pin}:players`,
+  /** normalised player name → player id, so names are unique within a game */
+  names: (/** @type {string} */ pin) => `sq:${pin}:names`,
   answers: (/** @type {string} */ pin, /** @type {string} */ sceneId) => `sq:${pin}:a:${sceneId}`,
 }
 
@@ -166,6 +183,11 @@ const clampDuration = (/** @type {unknown} */ d) => {
 
 /** @param {unknown} v @param {number} max */
 const str = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '')
+
+/** Display name: trimmed, inner whitespace collapsed. */
+const cleanName = (/** @type {unknown} */ v) => str(typeof v === 'string' ? v.replace(/\s+/g, ' ') : v, 24)
+/** Key used to compare names: "  Dimas  P " and "dimas p" are the same player. */
+const nameKey = (/** @type {string} */ name) => name.normalize('NFKC').toLowerCase()
 
 /** @returns {Promise<Room>} */
 async function loadRoom(/** @type {Store} */ store, /** @type {unknown} */ pin) {
@@ -223,18 +245,40 @@ async function post(store, body) {
     }
 
     case 'join': {
+      // Names are unique per game. Before the story starts a taken name is rejected; once it has
+      // started, joining with an existing name reconnects to that player (e.g. phone died, new tab).
       const room = await loadRoom(store, body.pin)
-      if (room.phase === 'results') throw new HttpError(409, 'This game has already finished.')
-      const name = str(body.name, 24)
+      const name = cleanName(body.name)
       if (!name) throw new HttpError(400, 'Enter your name.')
-      const existing = typeof body.playerId === 'string' && (await store.hget(keys.players(room.pin), body.playerId))
-      const playerId = existing ? body.playerId : randomId()
+      const key = nameKey(name)
+
+      const reconnect = async (/** @type {string} */ ownerId) => {
+        const raw = await store.hget(keys.players(room.pin), ownerId)
+        if (!raw) throw new HttpError(503, 'Could not reconnect, please try again.')
+        return { playerId: ownerId, ...JSON.parse(raw), reconnected: true }
+      }
+      const taken = () =>
+        new HttpError(409, `Someone already joined as “${name}”. Add your last name or an initial, e.g. “${name} P.”`)
+
+      const owner = await store.hget(keys.names(room.pin), key)
+      if (owner) {
+        if (owner === body.playerId) return reconnect(owner) // same device rejoining
+        if (room.phase === 'lobby') throw taken()
+        return reconnect(owner)
+      }
+      if (room.phase === 'results') throw new HttpError(409, 'This game has already finished.')
+
+      const playerId = randomId()
+      if (!(await store.hsetnx(keys.names(room.pin), key, playerId))) {
+        // Someone grabbed the same name a moment earlier.
+        const winner = await store.hget(keys.names(room.pin), key)
+        if (room.phase === 'lobby' || !winner) throw taken()
+        return reconnect(winner)
+      }
       /** @type {PlayerInfo} */
-      const info = existing
-        ? { ...JSON.parse(existing), name }
-        : { name, joinedAt: now, joinedStep: room.history.length }
+      const info = { name, joinedAt: now, joinedStep: room.history.length }
       await store.hset(keys.players(room.pin), playerId, JSON.stringify(info))
-      return { playerId, ...info }
+      return { playerId, ...info, reconnected: false }
     }
 
     case 'answer': {
@@ -360,7 +404,9 @@ async function get(store, q) {
     view.me = me ? JSON.parse(me) : null
     view.myAnswer = mine ? JSON.parse(mine) : null
   }
-  if (room.phase === 'results') {
+  // All of this player's answers: at the end, and whenever the client resyncs (e.g. after
+  // reconnecting on a new device), so their running score is right.
+  if (room.phase === 'results' || q.get('mine') === '1') {
     const mine = await store.hgetMany(sceneKeys, playerId)
     view.myAnswers = Object.fromEntries(
       room.history.flatMap((h, i) => (mine[i] ? [[h.sceneId, JSON.parse(/** @type {string} */ (mine[i]))]] : [])),

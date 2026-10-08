@@ -5,7 +5,11 @@ import { playerIdentity, type PlayerIdentity } from './live/client'
 import { HostApp } from './live/HostApp'
 import { PlayerApp } from './live/PlayerApp'
 
-type Mode = { kind: 'home' } | { kind: 'solo' } | { kind: 'host' } | { kind: 'player'; identity: PlayerIdentity }
+type Mode =
+  | { kind: 'home' }
+  | { kind: 'solo' }
+  | { kind: 'host' }
+  | { kind: 'player'; identity: PlayerIdentity; reconnected?: boolean }
 
 const joinPin = new URLSearchParams(location.search).get('join') ?? ''
 
@@ -33,6 +37,7 @@ export default function App() {
       return (
         <PlayerApp
           identity={mode.identity}
+          reconnected={mode.reconnected}
           onLeave={() => {
             playerIdentity.clear()
             home()
@@ -47,7 +52,7 @@ export default function App() {
       return (
         <Home
           initialPin={joinPin}
-          onJoined={(identity) => setMode({ kind: 'player', identity })}
+          onJoined={(identity, reconnected) => setMode({ kind: 'player', identity, reconnected })}
           onHost={() => setMode({ kind: 'host' })}
           onSolo={() => setMode({ kind: 'solo' })}
         />

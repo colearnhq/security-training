@@ -16,11 +16,13 @@ import { Countdown, LiveChoices } from './ui'
 
 interface Props {
   identity: PlayerIdentity
+  /** joined with a name that was already in the game, so this continues that player */
+  reconnected?: boolean
   onLeave: () => void
   onSolo: () => void
 }
 
-export function PlayerApp({ identity, onLeave, onSolo }: Props) {
+export function PlayerApp({ identity, reconnected, onLeave, onSolo }: Props) {
   const { pin, playerId, name, joinedStep } = identity
   // My answers by scene id. The server is the source of truth; this mirrors it for instant feedback.
   const mineKey = `colearn-security-quest:answers:${pin}:${playerId}`
@@ -47,8 +49,9 @@ export function PlayerApp({ identity, onLeave, onSolo }: Props) {
     lastScene.current = currentId
     if (needMine) {
       syncedScene.current = currentId
-      const saved = view.myAnswer
-      if (saved && currentId !== 'lobby') setMine((m) => ({ ...m, [currentId]: saved }))
+      // The server's copy wins: after reconnecting on another device this restores earlier answers.
+      const saved = { ...view.myAnswers, ...(view.myAnswer && currentId !== 'lobby' ? { [currentId]: view.myAnswer } : {}) }
+      if (Object.keys(saved).length) setMine((m) => ({ ...m, ...saved }))
     }
     return view
   }, finished ? null : 1000)
@@ -134,6 +137,11 @@ export function PlayerApp({ identity, onLeave, onSolo }: Props) {
         </>
       }
     >
+      {reconnected && (
+        <div className="banner info">
+          👋 Welcome back, {name}! You're reconnected to your game, with your earlier answers and score.
+        </div>
+      )}
       {error && <div className="banner error">⚠️ Connection problem: {error.message}. Retrying…</div>}
       {saveError && <div className="banner error">⚠️ Your answer wasn't saved: {saveError}</div>}
 

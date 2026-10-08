@@ -5,7 +5,7 @@ import type { PlayerInfo } from './live/protocol'
 
 interface Props {
   initialPin: string
-  onJoined: (identity: PlayerIdentity) => void
+  onJoined: (identity: PlayerIdentity, reconnected: boolean) => void
   onHost: () => void
   onSolo: () => void
 }
@@ -23,10 +23,17 @@ export function Home({ initialPin, onJoined, onHost, onSolo }: Props) {
     setError(null)
     try {
       const cleanPin = pin.replace(/\D/g, '')
-      const res = await apiPost<{ playerId: string } & PlayerInfo>({ action: 'join', pin: cleanPin, name })
+      // Send this tab's earlier player id (if any) so rejoining the same game from here is recognised.
+      const previous = playerIdentity.get()
+      const res = await apiPost<{ playerId: string; reconnected: boolean } & PlayerInfo>({
+        action: 'join',
+        pin: cleanPin,
+        name,
+        playerId: previous?.pin === cleanPin ? previous.playerId : undefined,
+      })
       const identity = { pin: cleanPin, playerId: res.playerId, name: res.name, joinedStep: res.joinedStep }
       playerIdentity.set(identity)
-      onJoined(identity)
+      onJoined(identity, res.reconnected)
     } catch (err) {
       setError((err as Error).message)
     } finally {

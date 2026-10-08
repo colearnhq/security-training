@@ -35,7 +35,9 @@ phones on the same network (`npm run dev -- --host`) with the PIN.
 1. **Host** picks *Host a live session*, enters the admin passcode and an answer time (15s by default), and gets a
    PIN, a QR code and a click-to-copy join link. The answer time can be changed in the lobby only; it's locked once
    the story starts. The lobby (and every player's waiting screen) explains the scoring.
-2. **Players** open the site, enter the PIN and their name.
+2. **Players** open the site, enter the PIN and their name. Names are unique per game (ignoring capitals and extra
+   spaces): in the lobby a taken name is rejected. Once the story has started, joining with an existing name
+   reconnects to that player with their answers and score, e.g. after a dead phone or a closed tab.
 3. For each scene the host clicks **Start / Next scene**. Everyone can read it and spot red flags, but the answer
    options stay hidden (on the host screen and on phones) until the host clicks **Open answers**. Players can change
    their answer until the timer runs out (the host can also stop the timer early).
