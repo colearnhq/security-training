@@ -70,6 +70,8 @@ phones on the same network (`npm run dev -- --host`) with the PIN.
   matter. Live mode adds `-3` for no answer and `+1` for sitting out a follow-up (`MISSED_POINTS` /
   `SAT_OUT_POINTS` in `src/engine.ts`).
 - **Ad breaks:** add an entry to `ADS` in `src/data/ads.ts` with the id of the scene it should follow.
+- **Test the live API:** `npm run test:api` runs the server against a fake Upstash Redis (100 players), which
+  catches Redis-only bugs the in-memory dev store can hide. Run it before a big session.
 - **Check your edits:** `npm run check` verifies scores, red flags, ad breaks and that no real-looking phone numbers
   slipped in (use `+62 XXX-XXXX-XXXX`).
 - **Branching:** give a scene a `condition: (flags) => boolean`. Flags come from `choice.flags` on earlier choices

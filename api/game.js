@@ -44,8 +44,23 @@ class HttpError extends Error {
  * @property {(keys: string[]) => Promise<Record<string, string>[]>} hgetallMany
  */
 
+/**
+ * With automaticDeserialization off, the client returns HGETALL's raw Redis reply: a flat
+ * [field, value, field, value, …] array (or null), not an object. Turn it into a plain object.
+ * @param {unknown} reply
+ * @returns {Record<string, string>}
+ */
+function hashReply(reply) {
+  if (!Array.isArray(reply)) return reply && typeof reply === 'object' ? /** @type {Record<string, string>} */ (reply) : {}
+  /** @type {Record<string, string>} */
+  const out = {}
+  for (let i = 0; i + 1 < reply.length; i += 2) out[String(reply[i])] = String(reply[i + 1])
+  return out
+}
+
 /** @returns {Store} */
 function redisStore(/** @type {string} */ url, /** @type {string} */ token) {
+  // Values are stored as JSON strings we parse ourselves, so keep the client from re-parsing them.
   const r = new Redis({ url, token, automaticDeserialization: false })
   return {
     get: (k) => r.get(k),
@@ -59,7 +74,7 @@ function redisStore(/** @type {string} */ url, /** @type {string} */ token) {
       await p.exec()
     },
     hget: (k, f) => r.hget(k, f),
-    hgetall: async (k) => (await r.hgetall(k)) ?? {},
+    hgetall: async (k) => hashReply(await r.hgetall(k)),
     hlen: (k) => r.hlen(k),
     hgetMany: async (keys, f) => {
       if (!keys.length) return []
@@ -71,7 +86,7 @@ function redisStore(/** @type {string} */ url, /** @type {string} */ token) {
       if (!keys.length) return []
       const p = r.pipeline()
       keys.forEach((k) => p.hgetall(k))
-      return /** @type {(Record<string, string> | null)[]} */ (await p.exec()).map((x) => x ?? {})
+      return (await p.exec()).map(hashReply)
     },
   }
 }

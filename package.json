@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "check": "node --experimental-strip-types --no-warnings scripts/check-content.mts"
+    "check": "node --experimental-strip-types --no-warnings scripts/check-content.mts",
+    "test:api": "node scripts/test-api-upstash.mjs"
   },
   "dependencies": {
     "@upstash/redis": "^1.39.0",
